@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -20,6 +21,15 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
 
     // Define ECR repository for the ECS task's Docker image
     const repository = ecr.Repository.fromRepositoryName(this, 'MyRepo', 'message-logger');
+
+    // Define IAM role for ECS task execution
+    const ecsTaskExecutionRole = new iam.Role(this, 'EcsTaskExecutionRole', {
+      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
+      ],
+    });
+
 
   }
 }
