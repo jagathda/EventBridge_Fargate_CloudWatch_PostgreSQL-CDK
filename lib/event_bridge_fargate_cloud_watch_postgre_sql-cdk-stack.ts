@@ -65,5 +65,10 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       publiclyAccessible: false,
     });
 
+    // ECS Task Definition
+    const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
+      executionRole: ecsTaskExecutionRole, // Role for ECS task execution
+    });
+
   }
 }
