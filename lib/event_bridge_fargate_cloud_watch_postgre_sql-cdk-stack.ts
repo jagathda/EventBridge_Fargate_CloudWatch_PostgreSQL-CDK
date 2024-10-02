@@ -37,5 +37,12 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       allowAllOutbound: true,
     });
 
+    // Security Group for the RDS PostgreSQL instance
+    const dbSecurityGroup = new ec2.SecurityGroup(this, 'DbSecurityGroup', {
+      vpc,
+      description: 'Allow Fargate tasks to access PostgreSQL RDS',
+      allowAllOutbound: true,
+    });
+
   }
 }
