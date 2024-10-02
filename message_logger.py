@@ -1,33 +1,57 @@
 import logging
 import json
+import psycopg2
+import os
 
-# Configure logging with INFO level to capture important events and general information
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 
-def handler(event, context):
+# PostgreSQL connection details from environment variables
+DB_HOST = os.getenv('PG_HOST')
+DB_NAME = os.getenv('PG_DB')
+DB_USER = os.getenv('PG_USER')
+DB_PASSWORD = os.getenv('PG_PASSWORD')
+DB_PORT = os.getenv('PG_PORT', '5432')  # Default to port 5432 if not set
+
+# Log the database connection details (excluding the password for security reasons)
+logging.info(f"Connecting to PostgreSQL at {DB_HOST}:{DB_PORT} with user {DB_USER}")
+
+def connect_to_db():
+    """Connect to the PostgreSQL database."""
     try:
-        # Log the received event as a JSON string for better readability in the logs
-        logging.info(f"Received event: {json.dumps(event)}")
-
-        # Add your event processing logic here
-        logging.info("Processing event...")  # Log that event processing has started
-
-        # Example of processing logic: check if 'key1' exists in the event data
-        if 'key1' in event:
-            # Log the value of 'key1' if it exists in the event
-            logging.info(f"Event contains key1 with value: {event['key1']}")
-
-        # Return a success message after the event is processed
-        return "Event processed successfully"
-
+        return psycopg2.connect(
+            host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT
+        )
     except Exception as e:
-        # Log any errors that occur during event processing
-        logging.error(f"Error occurred: {e}")
-        # Rethrow the exception to ensure proper error handling and visibility
+        logging.error(f"Database connection failed: {e}")
         raise
 
-# Simulate event reception (for local testing)
+def log_event_to_db(event):
+    """Log the event to the PostgreSQL database."""
+    with connect_to_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS event_logs (
+                    id SERIAL PRIMARY KEY,
+                    event_type VARCHAR(255),
+                    event_data JSONB,
+                    received_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            """)
+            cursor.execute("""
+                INSERT INTO event_logs (event_type, event_data) 
+                VALUES (%s, %s)
+            """, (event.get('detail-type', 'Unknown'), json.dumps(event)))
+        conn.commit()
+    logging.info("Event logged successfully.")
+
+def handler(event, context):
+    """Main event handler function."""
+    logging.info(f"Received event: {json.dumps(event)}")
+    log_event_to_db(event)
+    return "Event processed and logged successfully"
+
+# Simulate event reception for local testing
 if __name__ == "__main__":
-    # Example test event to simulate how the function handles real events
-    test_event = {"key1": "value1"}
-    handler(test_event, None)  # Call the handler function with the test event
+    test_event = {"key1": "value1", "detail-type": "TestEvent"}
+    handler(test_event, None)
