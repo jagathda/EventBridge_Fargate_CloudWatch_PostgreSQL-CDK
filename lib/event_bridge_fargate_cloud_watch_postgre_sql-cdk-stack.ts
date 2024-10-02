@@ -97,5 +97,13 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       container.addSecret('PG_PASSWORD', ecs.Secret.fromSecretsManager(dbSecret, 'password')); // Retrieve only 'password' field
     }
 
+    // Add an ingress rule to allow Fargate tasks to connect to PostgreSQL RDS
+    dbSecurityGroup.addIngressRule(
+      fargateSecurityGroup,
+      ec2.Port.tcp(5432),
+      'Allow PostgreSQL access from Fargate tasks',
+    );
+
+
   }
 }
