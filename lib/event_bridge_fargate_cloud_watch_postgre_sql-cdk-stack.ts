@@ -7,6 +7,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as events from 'aws-cdk-lib/aws-events';
+import * as eventstargets from 'aws-cdk-lib/aws-events-targets';
 
 export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -122,6 +123,18 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       new iam.PolicyStatement({
         actions: ['ecs:RunTask'],
         resources: [taskDefinition.taskDefinitionArn],
+      }),
+    );
+
+    // Add ECS task as a target for the EventBridge rule
+    rule.addTarget(
+      new eventstargets.EcsTask({
+        cluster: cluster, // Cluster for ECS tasks
+        taskDefinition: taskDefinition, // Task definition for the task
+        role: eventBridgeRole, // Role for EventBridge to invoke the task
+        subnetSelection: { subnetType: ec2.SubnetType.PUBLIC }, // Public subnet for Fargate tasks
+        securityGroups: [fargateSecurityGroup], // Security group for the Fargate task
+        assignPublicIp: true, // Assign a public IP to the Fargate task
       }),
     );
 
