@@ -73,7 +73,7 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
 
     // Define the container for the ECS task
     const container = taskDefinition.addContainer('MyContainer', {
-      image: ecs.ContainerImage.fromEcrRepository(repository), 
+      image: ecs.ContainerImage.fromEcrRepository(repository),
       logging: new ecs.AwsLogDriver({
         streamPrefix: 'MyAppLogs',
         logGroup: new logs.LogGroup(this, 'LogGroup', {
@@ -81,9 +81,15 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
           removalPolicy: cdk.RemovalPolicy.DESTROY,
         }),
       }),
-      memoryLimitMiB: 512, 
-      cpu: 256, 
+      memoryLimitMiB: 512,
+      cpu: 256,
     });
+
+    // Add environment variables for PostgreSQL connection to the container
+    container.addEnvironment('PG_HOST', dbInstance.instanceEndpoint.hostname);
+    container.addEnvironment('PG_USER', 'dbadmin');
+    container.addEnvironment('PG_DB', 'mydatabase');
+    container.addEnvironment('PG_PORT', '5432');
 
   }
 }
