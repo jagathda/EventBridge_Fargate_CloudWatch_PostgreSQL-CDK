@@ -54,7 +54,7 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
     // RDS PostgreSQL instance
     const dbInstance = new rds.DatabaseInstance(this, 'PostgreSQLInstance', {
       engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_13,
+        version: rds.PostgresEngineVersion.VER_16_3,
       }),
       vpc,
       vpcSubnets: {
@@ -132,12 +132,12 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
     // Add ECS task as a target for the EventBridge rule
     rule.addTarget(
       new eventstargets.EcsTask({
-        cluster: cluster, 
-        taskDefinition: taskDefinition, 
-        role: eventBridgeRole, 
-        subnetSelection: { subnetType: ec2.SubnetType.PUBLIC }, 
-        securityGroups: [fargateSecurityGroup], 
-        assignPublicIp: true, 
+        cluster: cluster,
+        taskDefinition: taskDefinition,
+        role: eventBridgeRole,
+        subnetSelection: { subnetType: ec2.SubnetType.PUBLIC },
+        securityGroups: [fargateSecurityGroup],
+        assignPublicIp: true,
       }),
     );
 
