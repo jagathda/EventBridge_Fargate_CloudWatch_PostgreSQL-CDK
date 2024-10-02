@@ -30,6 +30,12 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       ],
     });
 
+    // Security Group for the Fargate task
+    const fargateSecurityGroup = new ec2.SecurityGroup(this, 'FargateSecurityGroup', {
+      vpc,
+      description: 'Allow traffic from Fargate tasks to RDS',
+      allowAllOutbound: true,
+    });
 
   }
 }
