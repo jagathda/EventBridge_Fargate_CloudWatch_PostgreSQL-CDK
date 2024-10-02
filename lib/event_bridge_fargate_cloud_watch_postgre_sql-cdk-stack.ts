@@ -23,8 +23,11 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       vpc: vpc, // Cluster associated with the VPC
     });
 
-    // Define ECR repository for the ECS task's Docker image
-    const repository = ecr.Repository.fromRepositoryName(this, 'MyRepo', 'message-logger');
+    // Create an ECR repository for the ECS task's Docker image
+    const repository = new ecr.Repository(this, 'MyRepo', {
+      repositoryName: 'message-logger',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
 
     // Define IAM role for ECS task execution
     const ecsTaskExecutionRole = new iam.Role(this, 'EcsTaskExecutionRole', {
@@ -129,12 +132,12 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
     // Add ECS task as a target for the EventBridge rule
     rule.addTarget(
       new eventstargets.EcsTask({
-        cluster: cluster, // Cluster for ECS tasks
-        taskDefinition: taskDefinition, // Task definition for the task
-        role: eventBridgeRole, // Role for EventBridge to invoke the task
-        subnetSelection: { subnetType: ec2.SubnetType.PUBLIC }, // Public subnet for Fargate tasks
-        securityGroups: [fargateSecurityGroup], // Security group for the Fargate task
-        assignPublicIp: true, // Assign a public IP to the Fargate task
+        cluster: cluster, 
+        taskDefinition: taskDefinition, 
+        role: eventBridgeRole, 
+        subnetSelection: { subnetType: ec2.SubnetType.PUBLIC }, 
+        securityGroups: [fargateSecurityGroup], 
+        assignPublicIp: true, 
       }),
     );
 
