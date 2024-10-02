@@ -11,5 +11,10 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       maxAzs: 2, // 2 availability zones for high availability
     });
 
+    // ECS Cluster
+    const cluster = new ecs.Cluster(this, 'MyCluster', {
+      vpc: vpc, // Cluster associated with the VPC
+    });
+
   }
 }
