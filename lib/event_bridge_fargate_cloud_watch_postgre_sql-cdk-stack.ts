@@ -6,6 +6,7 @@ import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as events from 'aws-cdk-lib/aws-events';
 
 export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -97,13 +98,19 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       container.addSecret('PG_PASSWORD', ecs.Secret.fromSecretsManager(dbSecret, 'password')); // Retrieve only 'password' field
     }
 
-    // Add an ingress rule to allow Fargate tasks to connect to PostgreSQL RDS
+    // Add ingress rule to allow Fargate tasks to connect to PostgreSQL RDS
     dbSecurityGroup.addIngressRule(
       fargateSecurityGroup,
       ec2.Port.tcp(5432),
       'Allow PostgreSQL access from Fargate tasks',
     );
 
+    // EventBridge rule to trigger the ECS task
+    const rule = new events.Rule(this, 'MyEventRule', {
+      eventPattern: {
+        source: ['custom.my-application'], // Events with this source will trigger the ECS task
+      },
+    });
 
   }
 }
