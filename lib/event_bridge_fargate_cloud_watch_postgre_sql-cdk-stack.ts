@@ -5,6 +5,7 @@ import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rds from 'aws-cdk-lib/aws-rds';
+import * as logs from 'aws-cdk-lib/aws-logs';
 
 export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -68,6 +69,20 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
     // ECS Task Definition
     const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
       executionRole: ecsTaskExecutionRole, // Role for ECS task execution
+    });
+
+    // Define the container for the ECS task
+    const container = taskDefinition.addContainer('MyContainer', {
+      image: ecs.ContainerImage.fromEcrRepository(repository), 
+      logging: new ecs.AwsLogDriver({
+        streamPrefix: 'MyAppLogs',
+        logGroup: new logs.LogGroup(this, 'LogGroup', {
+          logGroupName: '/ecs/MyApp',
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+        }),
+      }),
+      memoryLimitMiB: 512, 
+      cpu: 256, 
     });
 
   }
