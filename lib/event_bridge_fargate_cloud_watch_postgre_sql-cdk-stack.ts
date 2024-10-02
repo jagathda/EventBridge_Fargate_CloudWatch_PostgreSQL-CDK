@@ -4,6 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as rds from 'aws-cdk-lib/aws-rds';
 
 export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -42,6 +43,26 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       vpc,
       description: 'Allow Fargate tasks to access PostgreSQL RDS',
       allowAllOutbound: true,
+    });
+
+    // RDS PostgreSQL instance
+    const dbInstance = new rds.DatabaseInstance(this, 'PostgreSQLInstance', {
+      engine: rds.DatabaseInstanceEngine.postgres({
+        version: rds.PostgresEngineVersion.VER_13,
+      }),
+      vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [dbSecurityGroup],
+      allocatedStorage: 20,
+      maxAllocatedStorage: 20,
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
+      multiAz: false,
+      databaseName: 'mydatabase',
+      credentials: rds.Credentials.fromGeneratedSecret('dbadmin'), // Secrets Manager for credentials
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      publiclyAccessible: false,
     });
 
   }
