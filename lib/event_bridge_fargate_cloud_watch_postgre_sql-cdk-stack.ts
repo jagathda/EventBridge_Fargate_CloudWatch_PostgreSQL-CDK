@@ -91,5 +91,11 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
     container.addEnvironment('PG_DB', 'mydatabase');
     container.addEnvironment('PG_PORT', '5432');
 
+    // Set the database password from Secrets Manager
+    const dbSecret = dbInstance.secret;
+    if (dbSecret) {
+      container.addSecret('PG_PASSWORD', ecs.Secret.fromSecretsManager(dbSecret, 'password')); // Retrieve only 'password' field
+    }
+
   }
 }
