@@ -112,5 +112,18 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
       },
     });
 
+    // IAM role for EventBridge to invoke ECS tasks
+    const eventBridgeRole = new iam.Role(this, 'EventBridgeRole', {
+      assumedBy: new iam.ServicePrincipal('events.amazonaws.com'),
+    });
+
+    // Grant EventBridge permission to trigger ECS tasks
+    eventBridgeRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['ecs:RunTask'],
+        resources: [taskDefinition.taskDefinitionArn],
+      }),
+    );
+
   }
 }
