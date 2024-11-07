@@ -30,6 +30,7 @@ def log_event_to_db(event):
     """Log the event to the PostgreSQL database."""
     with connect_to_db() as conn:
         with conn.cursor() as cursor:
+            # Create the table if it doesn't exist
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS event_logs (
                     id SERIAL PRIMARY KEY,
@@ -38,20 +39,32 @@ def log_event_to_db(event):
                     received_at TIMESTAMPTZ DEFAULT NOW()
                 )
             """)
+            
+            # Log the entire event data into the database
             cursor.execute("""
                 INSERT INTO event_logs (event_type, event_data) 
                 VALUES (%s, %s)
             """, (event.get('detail-type', 'Unknown'), json.dumps(event)))
+            
+        # Commit the transaction
         conn.commit()
+    
     logging.info("Event logged successfully.")
 
 def handler(event, context):
     """Main event handler function."""
-    logging.info(f"Received event: {json.dumps(event)}")
-    log_event_to_db(event)
-    return "Event processed and logged successfully"
+    
+    # Add more logging at the beginning to verify the function is being invoked
+    logging.info("Handler function invoked.")
+    
+    if event:
+        logging.info(f"Received event: {json.dumps(event, indent=4)}")
+    else:
+        logging.warning("No event received.")
+        return "No event received"
 
-# Simulate event reception for local testing
-if __name__ == "__main__":
-    test_event = {"key1": "value1", "detail-type": "TestEvent"}
-    handler(test_event, None)
+    # Log event to PostgreSQL
+    logging.info("Processing event for database logging.")
+    log_event_to_db(event)
+    
+    return "Event processed and logged successfully"

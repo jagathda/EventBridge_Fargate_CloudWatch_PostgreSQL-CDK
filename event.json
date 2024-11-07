@@ -1,0 +1,9 @@
+[
+  {
+    "Source": "custom.my-application",
+    "DetailType": "myDetailType",
+    "Detail": "{\"key1\":\"value1\"}",
+    "EventBusName": "default"
+  }
+]
+

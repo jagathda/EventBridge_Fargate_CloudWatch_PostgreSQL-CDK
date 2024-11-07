@@ -112,7 +112,8 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
     // EventBridge rule to trigger the ECS task
     const rule = new events.Rule(this, 'MyEventRule', {
       eventPattern: {
-        source: ['custom.my-application'], // Events with this source will trigger the ECS task
+        source: ['custom.my-application'],
+        detailType: ['myDetailType'],
       },
     });
 
@@ -130,7 +131,8 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
     );
 
     // Add ECS task as a target for the EventBridge rule
-    rule.addTarget(
+    //this is working
+    /*rule.addTarget(
       new eventstargets.EcsTask({
         cluster: cluster,
         taskDefinition: taskDefinition,
@@ -139,7 +141,116 @@ export class EventBridgeFargateCloudWatchPostgreSqlCdkStack extends cdk.Stack {
         securityGroups: [fargateSecurityGroup],
         assignPublicIp: true,
       }),
+    )*/
+
+    //this is working
+    /*rule.addTarget(
+      new eventstargets.EcsTask({
+        cluster: cluster,
+        taskDefinition: taskDefinition,
+        role: eventBridgeRole,
+        subnetSelection: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },  // Use private subnets
+        securityGroups: [fargateSecurityGroup],  // Ensure this SG allows outbound connections to RDS on port 5432
+        assignPublicIp: false,  // Do not assign a public IP, keep it private
+        containerOverrides: [
+          {
+            containerName: 'MyContainer',
+            environment: [
+              { name: 'EVENT_PAYLOAD', value: '{"key":"test_payload"}' },
+              { name: 'EVENT_TYPE', value: 'test_event' },
+            ],
+          },
+        ],
+      }),
+    );*/
+
+    //this is not working
+    /*rule.addTarget(
+      new eventstargets.EcsTask({
+        cluster: cluster,
+        taskDefinition: taskDefinition,
+        role: eventBridgeRole,
+        subnetSelection: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },  // Use private subnets
+        securityGroups: [fargateSecurityGroup],  // Ensure this SG allows outbound connections to RDS on port 5432
+        assignPublicIp: false,  // Do not assign a public IP, keep it private
+        containerOverrides: [
+          {
+            containerName: 'MyContainer',
+            environment: [
+              {
+                name: 'EVENT_PAYLOAD',
+                value: events.EventField.fromPath('$.detail') || '{"key":"default_payload"}',
+              },
+              {
+                name: 'EVENT_TYPE',
+                value: events.EventField.fromPath('$.detail-type') || 'Unknown',
+              },
+            ],
+          },
+        ],
+      }),
+    );*/
+
+    //this is working
+    /*rule.addTarget(
+      new eventstargets.EcsTask({
+        cluster: cluster,
+        taskDefinition: taskDefinition,
+        role: eventBridgeRole,
+        subnetSelection: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }, // Correct subnet selection
+        securityGroups: [fargateSecurityGroup],  // Security group attached
+        assignPublicIp: false,  // No public IP, task will run in private subnets
+        containerOverrides: [
+          {
+            containerName: 'MyContainer',
+            environment: [
+              {
+                name: 'EVENT_PAYLOAD',
+                value: events.RuleTargetInput.fromText(
+                  JSON.stringify(events.EventField.fromPath('$.detail'))
+                ).toString(),
+              },
+              {
+                name: 'EVENT_TYPE',
+                value: events.EventField.fromPath('$.detail-type') || 'Unknown',
+              },
+            ],
+          },
+        ],        
+      })
     );
 
+    output
+    INFO:root:EVENT_PAYLOAD: [object Object]
+    INFO:root:EVENT_TYPE: myDetailType
+    */
+
+    //this is not working
+    /*rule.addTarget(
+      new eventstargets.EcsTask({
+        cluster: cluster,
+        taskDefinition: taskDefinition,
+        role: eventBridgeRole,
+        subnetSelection: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+        securityGroups: [fargateSecurityGroup],
+        assignPublicIp: false,
+        containerOverrides: [
+          {
+            containerName: 'MyContainer',
+            environment: [
+              {
+                name: 'EVENT_PAYLOAD',
+                value: JSON.stringify(events.EventField.fromPath('$.detail')) || '{"key":"default_payload"}',  // Convert to string
+              },
+              {
+                name: 'EVENT_TYPE',
+                value: events.EventField.fromPath('$.detail-type') || 'Unknown',  // Extract as string
+              },
+            ],
+          },
+        ],
+      })
+    ); */   
+       
   }
 }
